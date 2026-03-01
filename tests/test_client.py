@@ -51,10 +51,43 @@ def test_send_message(client, mock_api):
     mock_api.post("/sessions/123:sendMessage").mock(return_value=Response(200, json={}))
     client.send_message("sessions/123", "hello")
 
+def test_get_activity(client, mock_api):
+    mock_api.get("/activities/1").mock(return_value=Response(200, json={
+        "name": "activities/1", "createTime": "t1", "type": "AGENT_MESSAGED"
+    }))
+    activity = client.get_activity("activities/1")
+    assert activity.name == "activities/1"
+
+def test_get_source(client, mock_api):
+    mock_api.get("/sources/1").mock(return_value=Response(200, json={
+        "name": "sources/1", "uri": "u1", "type": "GITHUB"
+    }))
+    source = client.get_source("sources/1")
+    assert source.name == "sources/1"
+
+def test_list_sources(client, mock_api):
+    mock_api.get("/sources").mock(return_value=Response(200, json={
+        "sources": [{"name": "sources/1", "uri": "u1", "type": "GITHUB"}]
+    }))
+    sources = list(client.list_sources())
+    assert len(sources) == 1
+
+def test_approve_plan(client, mock_api):
+    mock_api.post("/sessions/123:approvePlan").mock(return_value=Response(200, json={}))
+    client.approve_plan("sessions/123")
+
+def test_archive_session(client, mock_api):
+    mock_api.post("/sessions/123:archive").mock(return_value=Response(200, json={}))
+    client.archive_session("sessions/123")
+
+def test_unarchive_session(client, mock_api):
+    mock_api.post("/sessions/123:unarchive").mock(return_value=Response(200, json={}))
+    client.unarchive_session("sessions/123")
+
 def test_list_activities(client, mock_api):
     mock_api.get("/sessions/123/activities").mock(return_value=Response(200, json={
         "activities": [
-            {"name": "activities/1", "createTime": "t1", "type": "TYPE_A", "details": {"foo": "bar"}}
+            {"name": "activities/1", "createTime": "t1", "type": "AGENT_MESSAGED", "details": {"foo": "bar"}}
         ]
     }))
     activities = list(client.list_activities("sessions/123"))

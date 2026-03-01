@@ -2,11 +2,15 @@
 
 Create an idiomatic Python SDK (`jules-sdk`) wrapping the Jules REST API. The SDK should feel native to Python — `dataclasses`, `httpx`, iterator-based pagination, context managers. Target Python 3.10+, under 1000 lines of source.
 
+## Diagnostics
+- `python -m pytest tests/ -v --tb=short`
+- `python -m mypy src/jules/ --strict`
+- `python -m build --sdist`
+
 ## Tools
 - API Discovery Doc: `curl -s https://jules.googleapis.com/\$discovery/rest?version=v1alpha`
-- Validate packaging: `python -m build --sdist`
-- Run tests: `python -m pytest tests/ -v`
-- Type check: `python -m mypy src/jules/`
+- Coverage gaps: `python -m pytest tests/ -v --cov=src/jules --cov-report=term-missing`
+- Dependency audit: `pip list --outdated`
 
 ## Assessment Hints
 

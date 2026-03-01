@@ -15,6 +15,15 @@ class SessionState(str, Enum):
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
 
+class ActivityType(str, Enum):
+    AGENT_MESSAGED = "agentMessaged"
+    USER_MESSAGED = "userMessaged"
+    PLAN_GENERATED = "planGenerated"
+    PLAN_APPROVED = "planApproved"
+    PROGRESS_UPDATED = "progressUpdated"
+    SESSION_COMPLETED = "sessionCompleted"
+    SESSION_FAILED = "sessionFailed"
+
 @dataclass
 class Session:
     name: str
@@ -66,46 +75,106 @@ class Session:
 class Activity:
     name: str
     create_time: str
-    type: str
+    type: ActivityType
     details: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Activity":
+        # Identify the activity type from the keys
+        # The actual API returns one-of fields, e.g. "userMessaged": {...}
+        # The synthetic type will correspond to the one-of field present.
+        details: Dict[str, Any] = {}
+        activity_type = ActivityType.AGENT_MESSAGED  # fallback, should ideally not happen if enum covers all
+
+        # We need to look for any of the known one-of fields
+        # Note: If memory states that ActivityType is not explicitly defined in the discovery doc
+        # (which uses one-of properties) and requires a custom synthetic enum in the Python SDK
+        # for idiomatic usage (e.g., AGENT_MESSAGED, USER_MESSAGED), we implement that logic here.
+        for t in ActivityType:
+            if t.value in data:
+                activity_type = t
+                details = data[t.value]
+                break
+
         return cls(
             name=data["name"],
             create_time=data["createTime"],
-            type=data["type"],
-            details=data.get("details", {}),
+            type=activity_type,
+            details=details,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        result: Dict[str, Any] = {
+            "name": self.name,
+            "createTime": self.create_time,
+        }
+        result[self.type.value] = self.details
+        return result
+
+@dataclass
+class GitHubBranch:
+    display_name: str
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "GitHubBranch":
+        return cls(
+            display_name=data["displayName"],
         )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "name": self.name,
-            "createTime": self.create_time,
-            "type": self.type,
-            "details": self.details,
+            "displayName": self.display_name,
+        }
+
+@dataclass
+class GitHubRepo:
+    owner: str
+    repo: str
+    is_private: bool
+    default_branch: GitHubBranch
+    branches: List[GitHubBranch]
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "GitHubRepo":
+        return cls(
+            owner=data.get("owner", ""),
+            repo=data.get("repo", ""),
+            is_private=data.get("isPrivate", False),
+            default_branch=GitHubBranch.from_dict(data["defaultBranch"]) if "defaultBranch" in data else GitHubBranch(""),
+            branches=[GitHubBranch.from_dict(b) for b in data.get("branches", [])],
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "owner": self.owner,
+            "repo": self.repo,
+            "isPrivate": self.is_private,
+            "defaultBranch": self.default_branch.to_dict(),
+            "branches": [b.to_dict() for b in self.branches],
         }
 
 @dataclass
 class Source:
     name: str
-    uri: str
-    type: str
+    id: str
+    github_repo: Optional[GitHubRepo] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Source":
         return cls(
             name=data["name"],
-            uri=data["uri"],
-            type=data["type"],
+            id=data.get("id", ""),
+            github_repo=GitHubRepo.from_dict(data["githubRepo"]) if "githubRepo" in data else None,
         )
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        result: Dict[str, Any] = {
             "name": self.name,
-            "uri": self.uri,
-            "type": self.type,
+            "id": self.id,
         }
+        if self.github_repo:
+            result["githubRepo"] = self.github_repo.to_dict()
+        return result
 
 @dataclass
 class PlanStep:
@@ -152,47 +221,6 @@ class Plan:
             "createTime": self.create_time,
         }
 
-@dataclass
-class GitHubBranch:
-    display_name: str
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "GitHubBranch":
-        return cls(
-            display_name=data["displayName"],
-        )
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "displayName": self.display_name,
-        }
-
-@dataclass
-class GitHubRepo:
-    owner: str
-    repo: str
-    is_private: bool
-    default_branch: GitHubBranch
-    branches: List[GitHubBranch]
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "GitHubRepo":
-        return cls(
-            owner=data.get("owner", ""),
-            repo=data.get("repo", ""),
-            is_private=data.get("isPrivate", False),
-            default_branch=GitHubBranch.from_dict(data["defaultBranch"]) if "defaultBranch" in data else GitHubBranch(""),
-            branches=[GitHubBranch.from_dict(b) for b in data.get("branches", [])],
-        )
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "owner": self.owner,
-            "repo": self.repo,
-            "isPrivate": self.is_private,
-            "defaultBranch": self.default_branch.to_dict(),
-            "branches": [b.to_dict() for b in self.branches],
-        }
 
 @dataclass
 class PullRequest:

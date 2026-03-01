@@ -25,16 +25,44 @@ def test_session_to_dict():
     assert d["state"] == "RUNNING"
 
 def test_activity_roundtrip():
-    data = {"name": "activities/1", "createTime": "t", "type": "TYPE_A", "details": {"foo": "bar"}}
+    data = {
+        "name": "activities/1",
+        "createTime": "t",
+        "agentMessaged": {"message": "hello world"}
+    }
     a = Activity.from_dict(data)
-    assert a.details == {"foo": "bar"}
-    assert a.to_dict()["type"] == "TYPE_A"
+    assert a.details == {"message": "hello world"}
+    assert a.type.value == "agentMessaged"
+
+    roundtrip = a.to_dict()
+    assert roundtrip["name"] == "activities/1"
+    assert roundtrip["createTime"] == "t"
+    assert "agentMessaged" in roundtrip
+    assert roundtrip["agentMessaged"] == {"message": "hello world"}
 
 def test_source_roundtrip():
-    data = {"name": "sources/1", "uri": "https://github.com/x/y", "type": "GITHUB"}
+    data = {
+        "name": "sources/1",
+        "id": "1",
+        "githubRepo": {
+            "owner": "test",
+            "repo": "repo",
+            "isPrivate": True,
+            "defaultBranch": {"displayName": "main"},
+            "branches": [{"displayName": "main"}]
+        }
+    }
     s = Source.from_dict(data)
-    assert s.uri == "https://github.com/x/y"
-    assert s.to_dict()["type"] == "GITHUB"
+    assert s.id == "1"
+    assert s.github_repo is not None
+    assert s.github_repo.owner == "test"
+    assert s.github_repo.repo == "repo"
+
+    roundtrip = s.to_dict()
+    assert roundtrip["name"] == "sources/1"
+    assert roundtrip["id"] == "1"
+    assert "githubRepo" in roundtrip
+    assert roundtrip["githubRepo"]["owner"] == "test"
 
 from jules.models import Plan, PlanStep, PullRequest, SessionOutput, AutomationMode
 

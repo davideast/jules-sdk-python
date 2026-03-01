@@ -51,15 +51,25 @@ def test_send_message(client, mock_api):
     mock_api.post("/sessions/123:sendMessage").mock(return_value=Response(200, json={}))
     client.send_message("sessions/123", "hello")
 
+def test_get_activity(client, mock_api):
+    mock_api.get("/sessions/123/activities/456").mock(return_value=Response(200, json={
+        "name": "sessions/123/activities/456",
+        "createTime": "t1",
+        "agentMessaged": {"message": "foo"}
+    }))
+    activity = client.get_activity("sessions/123/activities/456")
+    assert activity.name == "sessions/123/activities/456"
+    assert activity.details == {"message": "foo"}
+
 def test_list_activities(client, mock_api):
     mock_api.get("/sessions/123/activities").mock(return_value=Response(200, json={
         "activities": [
-            {"name": "activities/1", "createTime": "t1", "type": "TYPE_A", "details": {"foo": "bar"}}
+            {"name": "activities/1", "createTime": "t1", "userMessaged": {"message": "bar"}}
         ]
     }))
     activities = list(client.list_activities("sessions/123"))
     assert len(activities) == 1
-    assert activities[0].details == {"foo": "bar"}
+    assert activities[0].details == {"message": "bar"}
 
 def test_error_handling_404(client, mock_api):
     mock_api.get("/sessions/999").mock(return_value=Response(404))
@@ -75,17 +85,34 @@ def test_approve_plan(client, mock_api):
     mock_api.post("/sessions/123:approvePlan").mock(return_value=Response(200, json={}))
     client.approve_plan("sessions/123")
 
+def test_archive_session(client, mock_api):
+    mock_api.post("/sessions/123:archiveSession").mock(return_value=Response(200, json={}))
+    client.archive_session("sessions/123")
+
+def test_unarchive_session(client, mock_api):
+    mock_api.post("/sessions/123:unarchiveSession").mock(return_value=Response(200, json={}))
+    client.unarchive_session("sessions/123")
+
+def test_get_source(client, mock_api):
+    mock_api.get("/sources/1").mock(return_value=Response(200, json={
+        "name": "sources/1",
+        "id": "1",
+    }))
+    source = client.get_source("sources/1")
+    assert source.name == "sources/1"
+    assert source.id == "1"
+
 def test_list_sources_pagination(client, mock_api):
     def side_effect(request):
         params = request.url.params
         if "pageToken" not in params:
              return Response(200, json={
-                "sources": [{"name": "sources/1", "uri": "https://example.com/1", "type": "TYPE_X"}],
+                "sources": [{"name": "sources/1", "id": "1"}],
                 "nextPageToken": "page2"
             })
         elif params["pageToken"] == "page2":
              return Response(200, json={
-                "sources": [{"name": "sources/2", "uri": "https://example.com/2", "type": "TYPE_Y"}],
+                "sources": [{"name": "sources/2", "id": "2"}],
             })
         return Response(404)
 

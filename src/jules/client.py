@@ -63,6 +63,11 @@ class JulesClient:
         response = self._client.post(f"/{session_name}:sendMessage", json={"message": message})
         response.raise_for_status()
 
+    def get_activity(self, name: str) -> Activity:
+        response = self._client.get(f"/{name}")
+        response.raise_for_status()
+        return Activity.from_dict(response.json())
+
     def list_activities(self, session_name: str) -> Iterator[Activity]:
         next_page_token = None
         while True:
@@ -84,6 +89,19 @@ class JulesClient:
     def approve_plan(self, name: str) -> None:
         response = self._client.post(f"/{name}:approvePlan")
         response.raise_for_status()
+
+    def archive_session(self, name: str) -> None:
+        response = self._client.post(f"/{name}:archiveSession")
+        response.raise_for_status()
+
+    def unarchive_session(self, name: str) -> None:
+        response = self._client.post(f"/{name}:unarchiveSession")
+        response.raise_for_status()
+
+    def get_source(self, name: str) -> Source:
+        response = self._client.get(f"/{name}")
+        response.raise_for_status()
+        return Source.from_dict(response.json())
 
     def list_sources(self) -> Iterator[Source]:
         next_page_token = None

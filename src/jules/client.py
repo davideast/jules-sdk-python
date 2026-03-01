@@ -1,4 +1,3 @@
-"""Jules REST API Client."""
 import os
 import httpx
 from typing import Iterator, Optional, Dict, Any
@@ -6,9 +5,6 @@ from .models import Session, Activity, Source
 
 class JulesError(Exception):
     pass
-
-class JulesAPIError(JulesError):
-    """Exception raised for API errors."""
 
 class JulesClient:
     def __init__(self, api_key: Optional[str] = None):
@@ -21,10 +17,10 @@ class JulesClient:
             headers={"x-goog-api-key": self.api_key}
         )
 
-    def __enter__(self) -> "JulesClient":
+    def __enter__(self):
         return self
 
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+    def __exit__(self, exc_type, exc_value, traceback):
         self._client.close()
 
     def create_session(self, prompt: str) -> Session:
@@ -116,28 +112,6 @@ class JulesClient:
 
             for activity_data in data.get("activities", []):
                 yield Activity.from_dict(activity_data)
-
-            next_page_token = data.get("nextPageToken")
-            if not next_page_token:
-                break
-
-    def approve_plan(self, name: str) -> None:
-        response = self._client.post(f"/{name}:approvePlan")
-        response.raise_for_status()
-
-    def list_sources(self) -> Iterator[Source]:
-        next_page_token = None
-        while True:
-            params: Dict[str, Any] = {}
-            if next_page_token:
-                params["pageToken"] = next_page_token
-
-            response = self._client.get("/sources", params=params)
-            response.raise_for_status()
-            data = response.json()
-
-            for source_data in data.get("sources", []):
-                yield Source.from_dict(source_data)
 
             next_page_token = data.get("nextPageToken")
             if not next_page_token:

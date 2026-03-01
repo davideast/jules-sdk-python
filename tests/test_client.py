@@ -103,27 +103,3 @@ def test_empty_results(client, mock_api):
     mock_api.get("/sessions").mock(return_value=Response(200, json={}))
     sessions = list(client.list_sessions())
     assert len(sessions) == 0
-
-def test_approve_plan(client, mock_api):
-    mock_api.post("/sessions/123:approvePlan").mock(return_value=Response(200, json={}))
-    client.approve_plan("sessions/123")
-
-def test_list_sources_pagination(client, mock_api):
-    def side_effect(request):
-        params = request.url.params
-        if "pageToken" not in params:
-             return Response(200, json={
-                "sources": [{"name": "sources/1", "uri": "https://example.com/1", "type": "TYPE_X"}],
-                "nextPageToken": "page2"
-            })
-        elif params["pageToken"] == "page2":
-             return Response(200, json={
-                "sources": [{"name": "sources/2", "uri": "https://example.com/2", "type": "TYPE_Y"}],
-            })
-        return Response(404)
-
-    mock_api.get("/sources").mock(side_effect=side_effect)
-    sources = list(client.list_sources())
-    assert len(sources) == 2
-    assert sources[0].name == "sources/1"
-    assert sources[1].name == "sources/2"

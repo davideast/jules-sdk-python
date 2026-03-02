@@ -1,7 +1,17 @@
 import pytest
 import httpx
 from httpx import Response
+from jules.client import JulesClient
 from jules.models import SessionState
+
+def test_default_base_url():
+    client = JulesClient(api_key="test-key")
+    assert client.base_url == "https://jules.googleapis.com/v1alpha"
+
+def test_custom_base_url():
+    client = JulesClient(api_key="test-key", base_url="http://localhost:8080")
+    assert client.base_url == "http://localhost:8080"
+
 
 def test_create_session(client, mock_api):
     mock_api.post("/sessions").mock(return_value=Response(200, json={

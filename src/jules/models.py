@@ -34,12 +34,12 @@ class GitHubRepoContext:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GitHubRepoContext":
         return cls(
-            github_repo=GitHubRepo.from_dict(data["githubRepo"]) if "githubRepo" in data else None,
+            github_repo=GitHubRepo.from_dict(data["githubRepo"]) if data.get("githubRepo") else None,
         )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "githubRepo": self.github_repo.to_dict(),
+            "githubRepo": self.github_repo.to_dict() if self.github_repo else None,
         }
 
 @dataclass

@@ -88,8 +88,8 @@ class Session:
         return cls(
             name=data["name"],
             state=SessionState(data.get("state", "STATE_UNSPECIFIED")),
-            create_time=data["createTime"],
-            update_time=data["updateTime"],
+            create_time=data.get("createTime", ""),
+            update_time=data.get("updateTime", ""),
             id=data.get("id", ""),
             title=data.get("title"),
             require_plan_approval=data.get("requirePlanApproval"),

@@ -1,4 +1,4 @@
-from jules.models import Session, Activity, Source, SessionState
+from jules.models import Session, Activity, Source, SessionState, Plan, PlanStep, PullRequest, SessionOutput, AutomationMode, ActivityType, GitPatch, ChangeSet, SourceContext, GitHubRepoContext
 
 def test_session_from_dict():
     data = {
@@ -179,3 +179,109 @@ def test_session_outputs():
     assert len(roundtrip["outputs"]) == 1
     assert roundtrip["outputs"][0]["pullRequest"]["url"] == "https://github.com/owner/repo/pull/1"
     assert roundtrip["archived"] is True
+
+def test_session_optional_fields_to_dict():
+    session = Session(
+        name="sessions/1",
+        state=SessionState.RUNNING,
+        create_time="t1",
+        update_time="t2",
+        id="123",
+        title="My Session",
+        require_plan_approval=True,
+        source_context=SourceContext(source="source", working_branch="main"),
+        prompt="hello",
+        url="http://example.com"
+    )
+    d = session.to_dict()
+    assert d["id"] == "123"
+    assert d["title"] == "My Session"
+    assert d["requirePlanApproval"] is True
+    assert d["sourceContext"]["source"] == "source"
+    assert d["sourceContext"]["workingBranch"] == "main"
+    assert d["prompt"] == "hello"
+    assert d["url"] == "http://example.com"
+
+def test_source_context_to_dict():
+    from jules.models import GitHubRepo, GitHubBranch
+    sc = SourceContext(
+        source="sources/1",
+        github_repo_context=GitHubRepoContext(
+            github_repo=GitHubRepo(
+                owner="test",
+                repo="repo",
+                is_private=True,
+                default_branch=GitHubBranch("main"),
+                branches=[]
+            )
+        ),
+        working_branch="main",
+        environment_variables_enabled=True
+    )
+    d = sc.to_dict()
+    assert d["source"] == "sources/1"
+    assert d["workingBranch"] == "main"
+    assert d["environmentVariablesEnabled"] is True
+    assert d["githubRepoContext"]["githubRepo"]["owner"] == "test"
+
+def test_activity_unknown_type():
+    data = {
+        "name": "activities/1",
+        "createTime": "t",
+        "someUnknownField": {"message": "hello world"}
+    }
+    a = Activity.from_dict(data)
+    # the fallback in models.py is AGENT_MESSAGED
+    assert a.type == ActivityType.AGENT_MESSAGED
+    assert a.details == {}
+
+def test_git_patch_roundtrip():
+    data = {
+        "unidiffPatch": "patch",
+        "baseCommitId": "123",
+        "suggestedCommitMessage": "msg"
+    }
+    gp = GitPatch.from_dict(data)
+    assert gp.unidiff_patch == "patch"
+    assert gp.base_commit_id == "123"
+    assert gp.suggested_commit_message == "msg"
+
+    d = gp.to_dict()
+    assert d["unidiffPatch"] == "patch"
+    assert d["baseCommitId"] == "123"
+    assert d["suggestedCommitMessage"] == "msg"
+
+def test_change_set_roundtrip():
+    data = {
+        "gitPatch": {
+            "unidiffPatch": "patch",
+            "baseCommitId": "123",
+            "suggestedCommitMessage": "msg"
+        },
+        "source": "source1"
+    }
+    cs = ChangeSet.from_dict(data)
+    assert cs.source == "source1"
+    assert cs.git_patch.unidiff_patch == "patch"
+
+    d = cs.to_dict()
+    assert d["source"] == "source1"
+    assert d["gitPatch"]["unidiffPatch"] == "patch"
+
+def test_session_output_change_set():
+    data = {
+        "changeSet": {
+            "gitPatch": {
+                "unidiffPatch": "patch",
+                "baseCommitId": "123",
+                "suggestedCommitMessage": "msg"
+            },
+            "source": "source1"
+        }
+    }
+    so = SessionOutput.from_dict(data)
+    assert so.change_set is not None
+    assert so.change_set.source == "source1"
+
+    d = so.to_dict()
+    assert d["changeSet"]["source"] == "source1"

@@ -1,8 +1,17 @@
 import pytest
 import httpx
 from httpx import Response
-from jules.client import JulesClient
+from jules.client import JulesClient, JulesError
 from jules.models import SessionState
+
+def test_missing_api_key(monkeypatch):
+    monkeypatch.delenv("JULES_API_KEY", raising=False)
+    with pytest.raises(JulesError):
+        JulesClient(api_key=None)
+
+def test_context_manager():
+    with JulesClient(api_key="test") as client:
+        assert client.api_key == "test"
 
 def test_default_base_url():
     client = JulesClient(api_key="test-key")
@@ -69,6 +78,24 @@ def test_get_activity(client, mock_api):
     activity = client.get_activity("sessions/123/activities/456")
     assert activity.name == "sessions/123/activities/456"
     assert activity.details == {"message": "foo"}
+
+def test_list_activities_pagination(client, mock_api):
+    def side_effect(request):
+        params = request.url.params
+        if "pageToken" not in params:
+             return Response(200, json={
+                "activities": [{"name": "activities/1", "createTime": "t1", "userMessaged": {"message": "bar"}}],
+                "nextPageToken": "page2"
+            })
+        elif params["pageToken"] == "page2":
+             return Response(200, json={
+                "activities": [{"name": "activities/2", "createTime": "t2", "agentMessaged": {"message": "baz"}}],
+            })
+        return Response(404)
+
+    mock_api.get("/sessions/123/activities").mock(side_effect=side_effect)
+    activities = list(client.list_activities("sessions/123"))
+    assert len(activities) == 2
 
 def test_list_activities(client, mock_api):
     mock_api.get("/sessions/123/activities").mock(return_value=Response(200, json={

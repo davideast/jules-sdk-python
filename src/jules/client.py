@@ -27,6 +27,24 @@ class JulesClient:
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self._client.close()
 
+    def _paginate(self, endpoint: str, key: str, model_cls: Any) -> Iterator[Any]:
+        next_page_token = None
+        while True:
+            params: Dict[str, Any] = {}
+            if next_page_token:
+                params["pageToken"] = next_page_token
+
+            response = self._client.get(endpoint, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            for item_data in data.get(key, []):
+                yield model_cls.from_dict(item_data)
+
+            next_page_token = data.get("nextPageToken")
+            if not next_page_token:
+                break
+
     def create_session(self, prompt: str) -> Session:
         response = self._client.post("/sessions", json={"prompt": prompt})
         response.raise_for_status()
@@ -38,22 +56,7 @@ class JulesClient:
         return Session.from_dict(response.json())
 
     def list_sessions(self) -> Iterator[Session]:
-        next_page_token = None
-        while True:
-            params: Dict[str, Any] = {}
-            if next_page_token:
-                params["pageToken"] = next_page_token
-
-            response = self._client.get("/sessions", params=params)
-            response.raise_for_status()
-            data = response.json()
-
-            for session_data in data.get("sessions", []):
-                yield Session.from_dict(session_data)
-
-            next_page_token = data.get("nextPageToken")
-            if not next_page_token:
-                break
+        yield from self._paginate("/sessions", "sessions", Session)
 
     def delete_session(self, name: str) -> None:
         response = self._client.delete(f"/{name}")
@@ -69,22 +72,7 @@ class JulesClient:
         return Activity.from_dict(response.json())
 
     def list_activities(self, session_name: str) -> Iterator[Activity]:
-        next_page_token = None
-        while True:
-            params: Dict[str, Any] = {}
-            if next_page_token:
-                params["pageToken"] = next_page_token
-
-            response = self._client.get(f"/{session_name}/activities", params=params)
-            response.raise_for_status()
-            data = response.json()
-
-            for activity_data in data.get("activities", []):
-                yield Activity.from_dict(activity_data)
-
-            next_page_token = data.get("nextPageToken")
-            if not next_page_token:
-                break
+        yield from self._paginate(f"/{session_name}/activities", "activities", Activity)
 
     def approve_plan(self, name: str) -> None:
         response = self._client.post(f"/{name}:approvePlan")
@@ -104,19 +92,4 @@ class JulesClient:
         return Source.from_dict(response.json())
 
     def list_sources(self) -> Iterator[Source]:
-        next_page_token = None
-        while True:
-            params: Dict[str, Any] = {}
-            if next_page_token:
-                params["pageToken"] = next_page_token
-
-            response = self._client.get("/sources", params=params)
-            response.raise_for_status()
-            data = response.json()
-
-            for source_data in data.get("sources", []):
-                yield Source.from_dict(source_data)
-
-            next_page_token = data.get("nextPageToken")
-            if not next_page_token:
-                break
+        yield from self._paginate("/sources", "sources", Source)

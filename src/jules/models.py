@@ -25,12 +25,58 @@ class ActivityType(str, Enum):
     SESSION_FAILED = "sessionFailed"
 
 @dataclass
+class GitHubRepoContext:
+    github_repo: 'GitHubRepo'
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "GitHubRepoContext":
+        return cls(
+            github_repo=GitHubRepo.from_dict(data["githubRepo"]),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "githubRepo": self.github_repo.to_dict(),
+        }
+
+@dataclass
+class SourceContext:
+    source: str
+    github_repo_context: Optional[GitHubRepoContext] = None
+    working_branch: Optional[str] = None
+    environment_variables_enabled: Optional[bool] = None
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SourceContext":
+        return cls(
+            source=data["source"],
+            github_repo_context=GitHubRepoContext.from_dict(data["githubRepoContext"]) if "githubRepoContext" in data else None,
+            working_branch=data.get("workingBranch"),
+            environment_variables_enabled=data.get("environmentVariablesEnabled"),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        result: Dict[str, Any] = {
+            "source": self.source,
+        }
+        if self.github_repo_context:
+            result["githubRepoContext"] = self.github_repo_context.to_dict()
+        if self.working_branch:
+            result["workingBranch"] = self.working_branch
+        if self.environment_variables_enabled is not None:
+            result["environmentVariablesEnabled"] = self.environment_variables_enabled
+        return result
+
+@dataclass
 class Session:
     name: str
     state: SessionState
     create_time: str
     update_time: str
-    expire_time: Optional[str] = None
+    id: str = ""
+    title: Optional[str] = None
+    require_plan_approval: Optional[bool] = None
+    source_context: Optional['SourceContext'] = None
     prompt: Optional[str] = None
     automation_mode: AutomationMode = AutomationMode.AUTOMATION_MODE_UNSPECIFIED
     outputs: List['SessionOutput'] = field(default_factory=list)
@@ -44,7 +90,10 @@ class Session:
             state=SessionState(data.get("state", "STATE_UNSPECIFIED")),
             create_time=data["createTime"],
             update_time=data["updateTime"],
-            expire_time=data.get("expireTime"),
+            id=data.get("id", ""),
+            title=data.get("title"),
+            require_plan_approval=data.get("requirePlanApproval"),
+            source_context=SourceContext.from_dict(data["sourceContext"]) if "sourceContext" in data else None,
             prompt=data.get("prompt"),
             automation_mode=AutomationMode(data.get("automationMode", "AUTOMATION_MODE_UNSPECIFIED")),
             outputs=[SessionOutput.from_dict(o) for o in data.get("outputs", [])],
@@ -62,8 +111,14 @@ class Session:
             "outputs": [o.to_dict() for o in self.outputs],
             "archived": self.archived,
         }
-        if self.expire_time:
-            result["expireTime"] = self.expire_time
+        if self.id:
+            result["id"] = self.id
+        if self.title:
+            result["title"] = self.title
+        if self.require_plan_approval is not None:
+            result["requirePlanApproval"] = self.require_plan_approval
+        if self.source_context:
+            result["sourceContext"] = self.source_context.to_dict()
         if self.prompt:
             result["prompt"] = self.prompt
         if self.url:
@@ -76,6 +131,10 @@ class Activity:
     name: str
     create_time: str
     type: ActivityType
+    id: str = ""
+    description: Optional[str] = None
+    originator: Optional[str] = None
+    artifacts: List[Any] = field(default_factory=list)
     details: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -100,6 +159,10 @@ class Activity:
             name=data["name"],
             create_time=data["createTime"],
             type=activity_type,
+            id=data.get("id", ""),
+            description=data.get("description"),
+            originator=data.get("originator"),
+            artifacts=data.get("artifacts", []),
             details=details,
         )
 
@@ -108,6 +171,15 @@ class Activity:
             "name": self.name,
             "createTime": self.create_time,
         }
+        if self.id:
+            result["id"] = self.id
+        if self.description:
+            result["description"] = self.description
+        if self.originator:
+            result["originator"] = self.originator
+        if self.artifacts:
+            result["artifacts"] = self.artifacts
+
         result[self.type.value] = self.details
         return result
 

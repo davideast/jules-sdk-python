@@ -1,7 +1,7 @@
 import pytest
 import httpx
 from httpx import Response
-from jules.client import JulesClient, JulesError
+from jules.client import JulesClient, JulesError, JulesAPIError
 from jules.models import SessionState
 
 def test_missing_api_key(monkeypatch):
@@ -108,9 +108,13 @@ def test_list_activities(client, mock_api):
     assert activities[0].details == {"message": "bar"}
 
 def test_error_handling_404(client, mock_api):
-    mock_api.get("/sessions/999").mock(return_value=Response(404))
-    with pytest.raises(httpx.HTTPStatusError):
+    mock_api.get("/sessions/999").mock(return_value=Response(404, text="Not Found"))
+    with pytest.raises(JulesAPIError) as exc_info:
         client.get_session("sessions/999")
+
+    assert exc_info.value.status_code == 404
+    assert "API Error 404" in str(exc_info.value)
+    assert "Not Found" in str(exc_info.value)
 
 def test_empty_results(client, mock_api):
     mock_api.get("/sessions").mock(return_value=Response(200, json={}))

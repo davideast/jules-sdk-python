@@ -7,11 +7,25 @@ Usage:
 import time
 from jules import JulesClient
 from jules.models import SessionState
+from jules.models import SourceContext, GitHubRepoContext, GitHubRepo, GitHubBranch
 
 def main() -> None:
     with JulesClient() as client:
         print("Creating a new Jules session...")
-        session = client.create_session(prompt="Write a hello world program in Python")
+
+        # Configure source to be the requested repository
+        source_context = SourceContext(
+            source="sources/github/davideast/jules-sdk-python",
+            github_repo_context=GitHubRepoContext(
+                starting_branch="main"
+            )
+        )
+
+        # We also need to add the sourceContext parameter to create_session
+        session = client.create_session(
+            prompt="Write a hello world program in Python",
+            source_context=source_context
+        )
         print(f"Session created: {session.name} (State: {session.state.value})")
 
         print("Polling session state until completed or failed...")

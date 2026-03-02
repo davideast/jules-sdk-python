@@ -10,7 +10,9 @@ class AutomationMode(str, Enum):
 class SessionState(str, Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     CREATED = "CREATED"
+    QUEUED = "QUEUED"
     RUNNING = "RUNNING"
+    IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
@@ -26,18 +28,23 @@ class ActivityType(str, Enum):
 
 @dataclass
 class GitHubRepoContext:
-    github_repo: 'GitHubRepo'
+    github_repo: Optional['GitHubRepo'] = None
+    starting_branch: Optional[str] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GitHubRepoContext":
         return cls(
-            github_repo=GitHubRepo.from_dict(data["githubRepo"]),
+            github_repo=GitHubRepo.from_dict(data["githubRepo"]) if "githubRepo" in data else None,
+            starting_branch=data.get("startingBranch"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
-            "githubRepo": self.github_repo.to_dict(),
-        }
+        result: Dict[str, Any] = {}
+        if self.github_repo:
+            result["githubRepo"] = self.github_repo.to_dict()
+        if self.starting_branch:
+            result["startingBranch"] = self.starting_branch
+        return result
 
 @dataclass
 class SourceContext:
@@ -88,8 +95,8 @@ class Session:
         return cls(
             name=data["name"],
             state=SessionState(data.get("state", "STATE_UNSPECIFIED")),
-            create_time=data["createTime"],
-            update_time=data["updateTime"],
+            create_time=data.get("createTime", ""),
+            update_time=data.get("updateTime", ""),
             id=data.get("id", ""),
             title=data.get("title"),
             require_plan_approval=data.get("requirePlanApproval"),

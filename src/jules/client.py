@@ -57,8 +57,11 @@ class JulesClient:
             if not next_page_token:
                 break
 
-    def create_session(self, prompt: str) -> Session:
-        response = self._client.post("/sessions", json={"prompt": prompt})
+    def create_session(self, prompt: str, source_context: Optional[Any] = None) -> Session:
+        data: Dict[str, Any] = {"prompt": prompt}
+        if source_context:
+            data["sourceContext"] = source_context.to_dict()
+        response = self._client.post("/sessions", json=data)
         self._raise_for_status(response)
         return Session.from_dict(response.json())
 

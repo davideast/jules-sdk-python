@@ -11,11 +11,11 @@ class JulesAPIError(JulesError):
     """Exception raised for API errors."""
 
 class JulesClient:
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, base_url: str = "https://jules.googleapis.com/v1alpha"):
         self.api_key = api_key or os.environ.get("JULES_API_KEY")
         if not self.api_key:
             raise JulesError("API key must be provided or set in JULES_API_KEY environment variable")
-        self.base_url = "https://jules.googleapis.com/v1alpha"
+        self.base_url = base_url
         self._client = httpx.Client(
             base_url=self.base_url,
             headers={"x-goog-api-key": self.api_key}

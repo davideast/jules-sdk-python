@@ -5,7 +5,10 @@ name: Fleet Merge
 
 on:
   schedule:
-    - cron: '0 */4 * * *' # Every 4 hours — edit to your preference
+    - cron: '*/30 * * * *'
+  workflow_run:
+    workflows: ['Conflict Detection']
+    types: [completed]
   workflow_dispatch:
     inputs:
       mode:
@@ -45,10 +48,13 @@ jobs:
           if [ "${{ inputs.redispatch }}" = "true" ]; then
             REDISPATCH_FLAG="--redispatch"
           fi
-          npx @google/jules-fleet merge \
-            --mode ${{ inputs.mode || 'label' }} \
-            --run-id "${{ inputs.fleet_run_id }}" \
+          npx @google/jules-fleet merge \\
+            --mode ${{ inputs.mode || 'label' }} \\
+            --run-id "${{ inputs.fleet_run_id }}" \\
             $REDISPATCH_FLAG
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          GITHUB_APP_ID: ${{ secrets.FLEET_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY_BASE64: ${{ secrets.FLEET_APP_PRIVATE_KEY }}
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.FLEET_APP_INSTALLATION_ID }}

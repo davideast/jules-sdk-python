@@ -90,7 +90,7 @@ class JulesClient:
         self._raise_for_status(response)
 
     def send_message(self, session_name: str, message: str) -> None:
-        response = self._client.post(f"/{session_name}:sendMessage", json={"message": message})
+        response = self._client.post(f"/{session_name}:sendMessage", json={"prompt": message})
         self._raise_for_status(response)
 
     def get_activity(self, name: str) -> Activity:

@@ -57,8 +57,24 @@ class JulesClient:
             if not next_page_token:
                 break
 
-    def create_session(self, prompt: str) -> Session:
-        response = self._client.post("/sessions", json={"prompt": prompt})
+    def create_session(self, prompt: str, require_plan_approval: Optional[bool] = None, source: Optional[str] = None, source_context: Optional[Any] = None) -> Session:
+        payload: Dict[str, Any] = {"prompt": prompt}
+
+        if require_plan_approval is not None:
+            payload["requirePlanApproval"] = require_plan_approval
+
+        if source is not None:
+            # Format the source properly per the API documentation, default to 'sources/' prefix
+            if not source.startswith("sources/"):
+                source = f"sources/{source}"
+            payload["sourceContext"] = {
+                "source": source,
+                "githubRepoContext": {"startingBranch": "main"}
+            }
+        elif source_context:
+            payload["sourceContext"] = source_context.to_dict()
+
+        response = self._client.post("/sessions", json=payload)
         self._raise_for_status(response)
         return Session.from_dict(response.json())
 

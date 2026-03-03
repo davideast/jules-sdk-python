@@ -11,6 +11,9 @@ class SessionState(str, Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     CREATED = "CREATED"
     RUNNING = "RUNNING"
+    IN_PROGRESS = "IN_PROGRESS"
+    PAUSED = "PAUSED"
+    AWAITING_USER_FEEDBACK = "AWAITING_USER_FEEDBACK"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
@@ -26,17 +29,17 @@ class ActivityType(str, Enum):
 
 @dataclass
 class GitHubRepoContext:
-    github_repo: 'GitHubRepo'
+    github_repo: Optional['GitHubRepo'] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GitHubRepoContext":
         return cls(
-            github_repo=GitHubRepo.from_dict(data["githubRepo"]),
+            github_repo=GitHubRepo.from_dict(data["githubRepo"]) if data.get("githubRepo") else None,
         )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "githubRepo": self.github_repo.to_dict(),
+            "githubRepo": self.github_repo.to_dict() if self.github_repo else None,
         }
 
 @dataclass

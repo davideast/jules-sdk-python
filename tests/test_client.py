@@ -161,3 +161,25 @@ def test_list_sources_pagination(client, mock_api):
     assert len(sources) == 2
     assert sources[0].name == "sources/1"
     assert sources[1].name == "sources/2"
+
+def test_create_session_with_source(client, mock_api):
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    client.create_session("foo", source="github/davideast/repo")
+    assert mock_api.calls[-1].request.read().decode().find("sources/github/davideast/repo") != -1
+
+def test_create_session_with_source_with_prefix(client, mock_api):
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    client.create_session("foo", source="sources/github/davideast/repo")
+    assert mock_api.calls[-1].request.read().decode().find("sources/github/davideast/repo") != -1
+
+def test_create_session_with_require_plan_approval(client, mock_api):
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    client.create_session("foo", require_plan_approval=True)
+    assert mock_api.calls[-1].request.read().decode().find('"requirePlanApproval":true') != -1
+
+def test_create_session_with_source_context(client, mock_api):
+    from jules.models import SourceContext
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    sc = SourceContext(source="sources/1", working_branch="main")
+    client.create_session("foo", source_context=sc)
+    assert mock_api.calls[-1].request.read().decode().find('"source":"sources/1"') != -1

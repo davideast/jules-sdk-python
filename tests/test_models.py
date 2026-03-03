@@ -285,3 +285,7 @@ def test_session_output_change_set():
 
     d = so.to_dict()
     assert d["changeSet"]["source"] == "source1"
+
+def test_github_repo_context_starting_branch():
+    context = GitHubRepoContext(starting_branch="feature-branch")
+    assert context.to_dict()["startingBranch"] == "feature-branch"

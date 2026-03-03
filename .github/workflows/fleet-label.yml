@@ -27,14 +27,14 @@ jobs:
           echo "Found linked issue: #$ISSUE_NUMBER"
 
           # Check if the linked issue has the 'fleet' label
-          ISSUE_LABELS=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '.labels[].name')
+          ISSUE_LABELS=$(gh issue view "$ISSUE_NUMBER" -R ${{ github.repository }} --json labels --jq '.labels[].name')
 
           if echo "$ISSUE_LABELS" | grep -q '^fleet$'; then
             echo "Linked issue has 'fleet' label. Applying 'fleet-merge-ready' to PR."
             gh pr edit "$PR_URL" --add-label "fleet-merge-ready"
 
             # Check if linked issue has a milestone and copy it
-            MILESTONE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json milestone --jq '.milestone.title // empty')
+            MILESTONE_TITLE=$(gh issue view "$ISSUE_NUMBER" -R ${{ github.repository }} --json milestone --jq '.milestone.title // empty')
             if [ -n "$MILESTONE_TITLE" ]; then
               echo "Applying milestone '$MILESTONE_TITLE' to PR."
               gh pr edit "$PR_URL" --milestone "$MILESTONE_TITLE"

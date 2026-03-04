@@ -126,11 +126,11 @@ def test_approve_plan(client, mock_api):
     client.approve_plan("sessions/123")
 
 def test_archive_session(client, mock_api):
-    mock_api.post("/sessions/123:archiveSession").mock(return_value=Response(200, json={}))
+    mock_api.post("/sessions/123:archive").mock(return_value=Response(200, json={}))
     client.archive_session("sessions/123")
 
 def test_unarchive_session(client, mock_api):
-    mock_api.post("/sessions/123:unarchiveSession").mock(return_value=Response(200, json={}))
+    mock_api.post("/sessions/123:unarchive").mock(return_value=Response(200, json={}))
     client.unarchive_session("sessions/123")
 
 def test_get_source(client, mock_api):

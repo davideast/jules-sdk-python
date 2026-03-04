@@ -1,25 +1,26 @@
 ---
 milestone: "3"
 ---
-# Markdown Documentation (Diátaxis)
+# Deep Documentation (Diátaxis)
 
-Write documentation for the Jules SDK organized according to the [Diátaxis framework](https://diataxis.fr/) — four distinct documentation types, each serving a different user need. Files live in `docs/tutorials/`, `docs/how-to/`, `docs/reference/`, and `docs/explanation/`, with `README.md` at the repo root as the entry point.
+Write deep, comprehensive documentation for the Jules SDK organized according to the [Diátaxis framework](https://diataxis.fr/) — four distinct documentation types, each serving a different user need. The focus is to constantly improve the **depth** of the docs and to grow to cover helpful topics, without sprawling the navigation and categories. Files live in `docs/tutorials/`, `docs/how-to/`, `docs/reference/`, and `docs/explanation/`, with `README.md` at the repo root as the entry point.
 
 ## Diagnostics
-- Existing docs: `find docs/ -name "*.md" | sort`
-- Current README: `cat README.md`
-- Validate internal links: `markdown-link-check README.md docs/**/*.md`
-- Check snippets exist: `find examples/ -name "*.py" | sort`
 
-## Tools
-- API Discovery Doc: `curl -s https://jules.googleapis.com/$discovery/rest?version=v1alpha`
-- SDK source: `cat src/jules/client.py`
-- SDK models: `cat src/jules/models.py`
-- Existing snippets: `find examples/ -name "*.py" -exec cat {} +`
+Before starting new documentation work, assess the current state and structure of the project:
 
-## The Four Documentation Types
+- **File Hierarchy:** `find docs/ -name "*.md" | sort`
+- **Current README Signpost:** `cat README.md`
+- **Internal Link Health:** `npx markdown-link-check README.md docs/**/*.md`
+- **Code Snippet Availability:** `find examples/ -name "*.py" | sort`
+- **API Capabilities:** `curl -s https://jules.googleapis.com/$discovery/rest?version=v1alpha`
+- **SDK Implementation:** `cat src/jules/client.py` and `cat src/jules/models.py`
+- **Snippet Details:** `find examples/ -name "*.py" -exec cat {} +`
 
-Diátaxis defines four distinct documentation types. Before writing anything, identify which type it is — and hold to only that type. Mixing them is the root cause of most documentation problems.
+## Hints
+
+### The Four Documentation Types
+Diátaxis defines four distinct documentation types. Mixing them is the root cause of shallow, confusing documentation. Before writing anything, identify which type it is — and hold strictly to that type, but dive deep.
 
 | Type | User need | User state | Key question to ask yourself |
 |------|-----------|------------|------------------------------|
@@ -28,131 +29,47 @@ Diátaxis defines four distinct documentation types. Before writing anything, id
 | Reference | Look up facts about the machinery | Working | Am I describing, or am I explaining? |
 | Explanation | Understand the why and how | Studying | Am I adding context, or am I instructing? |
 
-## Assessment Hints
+### Driving Depth Without Sprawl
+The core challenge is balancing comprehensive, deep content with clean, usable navigation. Do not clutter the `README.md` or core index files with every minor example.
 
-Start by reading the SDK source (`src/jules/client.py`, `src/jules/models.py`) and all existing snippets in `examples/`. The snippets from milestone 2 are your primary usage evidence.
+Instead, employ a hub-and-spoke model for temporal or demonstrative content:
+1. **The Core Documentation:** Keep the main `README.md` focused on top-level concepts (e.g., *How to attach sources*, *JulesClient Reference*). These must stay permanently up-to-date.
+2. **The "Feed" or "Cookbook":** Create centralized aggregators (e.g., `docs/how-to/cookbook.md` or a "feed" of examples) where specific, narrow integrations are listed (like a daily social post).
+3. **Link Backwards:** If an integration topic (e.g., "Using Jules with Flask") is demonstrative only, it should link back to the core API reference for the underlying methods, rather than re-explaining them. This keeps temporal content cleanly separated from permanent machinery.
 
-For each assessment, identify which Diátaxis quadrant is most underserved and produce one document that fills it. Work from the inside out — don't try to build a complete structure upfront. Each document should serve a single, identifiable user need.
+### Suggested Areas for Deep Dives
 
-### Tutorials (`docs/tutorials/`)
+#### Tutorials (`docs/tutorials/`)
+*   **Deepen the First Session:** Don't just show `create_session()`. Expand the tutorial to cover what happens when the session pauses, how to read a `Plan`, and how to inspect the final `ChangeSet`.
 
-A tutorial is a **lesson**. The user is a learner; you are the instructor. Your job is to ensure their success. Tutorials are practical — the user does things — but the goal is what they *learn*, not just what they produce.
+#### How-to Guides (`docs/how-to/`)
+*   **Framework Integrations:** Create specific, deep how-to guides or cookbook entries for using the SDK in real-world web applications. Examples include:
+    *   **Django:** Writing a management command that kicks off a Jules session.
+    *   **Flask:** Exposing an endpoint to list Jules activities via a webhook.
+    *   **FastAPI:** Wrapping the Jules SDK in asynchronous endpoints using `anyio` or background tasks.
+    *   *Note: Do not over-index on these specific frameworks. Broaden out to CLI tools (Click, Typer) or data pipelines as needed, but centralize them in a cookbook to avoid navigation sprawl.*
+*   **Advanced Plan Approval:** Detail exactly how to parse the `PlanStep` models and programmatically reject or approve based on custom validation logic.
 
-Qualities of a good tutorial:
-- Starts from a known state, ends at a known state
-- Every step works — no "your output may vary"
-- Explains what is happening at each step, briefly, without distracting from the doing
-- Does not explain *why* things work the way they do (that belongs in explanation)
-- Does not show all possible options (that belongs in reference)
+#### Reference (`docs/reference/`)
+*   **Exhaustive Detail:** The current reference docs might list methods, but lack depth. Ensure every parameter, every return type, and every possible raised exception (`JulesError`, `JulesAPIError`, specific HTTP codes) is documented extensively.
 
-Suggested tutorial for Jules:
-- **`docs/tutorials/first-session.md`** — From `pip install` to a completed session. The user creates a client, submits a task, watches it run, and reads the result. They learn what a session *feels like* before understanding what it *is*.
+#### Explanation (`docs/explanation/`)
+*   **Deep Architectural Context:** Why is the SDK synchronous when the API is asynchronous? Explain the design decisions behind the polling models vs webhook architectures.
 
-### How-to Guides (`docs/how-to/`)
-
-A how-to guide addresses a **real-world goal or problem**. The user is already competent; they don't need to be taught. They need directions. Write from the user's perspective, not the SDK's.
-
-Qualities of a good how-to guide:
-- The title names the goal, not the tool: "How to wait for a session to finish", not "Using the poll method"
-- Assumes baseline competence — skip obvious steps
-- May fork and require judgment; not all problems are linear
-- Links to reference for exhaustive details, rather than including them
-
-Suggested how-to guides for Jules:
-- **`docs/how-to/poll-to-completion.md`** — How to wait for a session to reach a terminal state, including timeout handling.
-- **`docs/how-to/approve-a-plan.md`** — How to inspect plan steps and approve or reject before execution begins.
-- **`docs/how-to/handle-errors.md`** — How to catch `JulesAPIError`, distinguish retryable from fatal errors, and recover gracefully.
-- **`docs/how-to/attach-sources.md`** — How to attach source context to a session before submitting.
-
-### Reference (`docs/reference/`)
-
-Reference material **describes the machinery**. It is consulted, not read. Write neutrally — no instruction, no explanation, no opinion. If a method exists, it appears here; if a field has a type, state it.
-
-Qualities of good reference:
-- Structure mirrors the SDK's structure (module → class → method)
-- States facts: types, defaults, constraints, error conditions
-- Uses brief examples only to illustrate usage, not to teach
-- Austere — every word earns its place
-
-Suggested reference pages for Jules:
-- **`docs/reference/client.md`** — `JulesClient`: constructor parameters, context manager behavior, all public methods with signatures, parameters, return types, and exceptions raised.
-- **`docs/reference/models.md`** — All model classes (`Session`, `Plan`, `PlanStep`, etc.): fields, types, and allowed values.
-- **`docs/reference/errors.md`** — `JulesAPIError` and its subclasses: when each is raised, which are retryable, and what attributes they carry.
-- **`docs/reference/session-states.md`** — Enumeration of all session lifecycle states, valid transitions, and terminal states.
-
-### Explanation (`docs/explanation/`)
-
-Explanation provides **context and understanding**. The user is studying, not working. Explanation answers *why*, illuminates design decisions, and joins things together. It can take perspectives and circle around its subject.
-
-Qualities of good explanation:
-- Does not instruct — link to how-to guides for that
-- Does not list facts — link to reference for that
-- Helps the reader build a mental model
-- Can discuss tradeoffs, history, or the reasoning behind an API design
-
-Suggested explanations for Jules:
-- **`docs/explanation/sessions.md`** — What a session is, why the plan-gated model exists, and how the lifecycle was designed to support long-running async tasks.
-- **`docs/explanation/sources.md`** — What sources represent, how Jules uses them to scope execution, and why they are separate from the task description.
-
-## README.md
-
-The README is not a Diátaxis document — it is a **signpost**. Its job is to orient a new developer and get them to the right document as fast as possible. Keep it short.
-
-```markdown
-# Jules SDK for Python
-
-one-line description
-
-## Installation
-
-pip install jules-sdk
-
-## Quickstart
-
-the shortest possible working example — ideally 5–10 lines
-
-## Documentation
-
-**Learning Jules**
-- [Your first session](docs/tutorials/first-session.md) — start here
-
-**Doing things**
-- [Wait for a session to finish](docs/how-to/poll-to-completion.md)
-- [Approve a plan](docs/how-to/approve-a-plan.md)
-- [Handle errors](docs/how-to/handle-errors.md)
-- [Attach sources](docs/how-to/attach-sources.md)
-
-**Looking things up**
-- [JulesClient](docs/reference/client.md)
-- [Models](docs/reference/models.md)
-- [Errors](docs/reference/errors.md)
-- [Session states](docs/reference/session-states.md)
-
-**Understanding Jules**
-- [How sessions work](docs/explanation/sessions.md)
-- [How sources work](docs/explanation/sources.md)
-```
-
-## Insight Hints
-- After writing each document, identify which quadrant it actually ended up in — if it drifted (a tutorial that instructs without teaching, a how-to that explains too much), flag it for revision
-- Report which SDK methods and model fields have no corresponding reference entry
-- Note which user problems from the snippets have no corresponding how-to guide
+### Insight Hints
+- After writing each document, identify which quadrant it actually ended up in — if it drifted, flag it for revision.
+- Ensure integration examples focus on the *intersection* of the SDK and the framework, not just teaching the framework.
 
 ## Verification
 
-After writing each document:
-- All code blocks are syntactically valid Python (copy-paste runnable with a valid key)
-- All internal links resolve: `markdown-link-check README.md docs/**/*.md`
-- No placeholder text: `grep -rn "TODO\|TBD\|<fill" README.md docs/`
-- Each document is clearly one Diátaxis type — if you can't identify which quadrant it belongs to, it needs to be split or refocused
+After writing or updating each document, you must verify the following constraints to ensure the depth didn't break the structure:
+
+- All code blocks are syntactically valid Python (copy-paste runnable with a valid key).
+- All internal links resolve: `npx markdown-link-check README.md docs/**/*.md`
+- No placeholder text remains: `grep -rn "TODO\|TBD\|<fill" README.md docs/`
+- The `README.md` remains concise. If you added 5 framework examples, ensure they are listed under a single "Framework Integrations" link, not as 5 separate main navigation items.
+- Reference docs accurately describe the SDK as it actually exists in `src/`. No aspirational content.
+- Do not document private SDK methods (anything prefixed with `_`).
 
 ### When something is missing
-
-If a doc references a snippet that doesn't exist, or an API feature with no SDK coverage, note it in `docs/_gaps.md` rather than writing speculative documentation. This file is internal and should not be linked from the README.
-
-## Constraints
-- `README.md` at repo root; topic docs in `docs/{type}/{topic}.md` (lowercase, hyphenated)
-- Tutorials and how-to code examples must be drawn from actual `examples/` snippets
-- Reference docs must describe the SDK as it actually exists — no aspirational content
-- Explanation docs must not instruct; how-to guides must not explain beyond what's needed for the task
-- Do not document private SDK methods (anything prefixed with `_`)
+If a doc references an API feature with no SDK coverage, note it in `docs/_gaps.md` rather than writing speculative documentation. This file is internal and should not be linked from the README.

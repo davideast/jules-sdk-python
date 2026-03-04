@@ -183,3 +183,21 @@ def test_create_session_with_source_context(client, mock_api):
     sc = SourceContext(source="sources/1", working_branch="main")
     client.create_session("foo", source_context=sc)
     assert mock_api.calls[-1].request.read().decode().find('"source":"sources/1"') != -1
+
+def test_network_connect_error(client, mock_api):
+    def side_effect(request):
+        raise httpx.ConnectError("Failed to establish connection")
+
+    mock_api.get("/sessions/123").mock(side_effect=side_effect)
+    with pytest.raises(JulesError) as exc_info:
+        client.get_session("sessions/123")
+    assert "Network error: Failed to establish connection" in str(exc_info.value)
+
+def test_network_read_timeout(client, mock_api):
+    def side_effect(request):
+        raise httpx.ReadTimeout("Read timeout")
+
+    mock_api.get("/sessions/123").mock(side_effect=side_effect)
+    with pytest.raises(JulesError) as exc_info:
+        client.get_session("sessions/123")
+    assert "Network error: Read timeout" in str(exc_info.value)

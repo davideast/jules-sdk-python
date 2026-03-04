@@ -39,6 +39,7 @@ with JulesClient() as client:
 **Understanding Jules**
 - [How sessions work](docs/explanation/sessions.md)
 - [How sources work](docs/explanation/sources.md)
+- [Architecture and design](docs/explanation/architecture.md)
 
 ## Development
 

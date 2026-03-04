@@ -9,7 +9,7 @@ def main():
         return
 
     client = httpx.Client(
-        base_url="https://jules.googleapis.com/v1alpha",
+        base_url=os.environ.get("JULES_BASE_URL", "https://jules.googleapis.com/v1alpha"),
         headers={"x-goog-api-key": api_key}
     )
 

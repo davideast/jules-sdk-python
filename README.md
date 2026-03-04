@@ -28,6 +28,7 @@ with JulesClient() as client:
 - [Approve a plan](docs/how-to/approve-a-plan.md)
 - [Handle errors](docs/how-to/handle-errors.md)
 - [Attach sources](docs/how-to/attach-sources.md)
+- [Framework integrations cookbook](docs/how-to/cookbook.md)
 
 **Looking things up**
 - [JulesClient](docs/reference/client.md)
@@ -38,6 +39,7 @@ with JulesClient() as client:
 **Understanding Jules**
 - [How sessions work](docs/explanation/sessions.md)
 - [How sources work](docs/explanation/sources.md)
+- [Architecture and design](docs/explanation/architecture.md)
 
 ## Development
 

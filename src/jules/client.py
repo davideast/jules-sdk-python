@@ -106,11 +106,11 @@ class JulesClient:
         self._raise_for_status(response)
 
     def archive_session(self, name: str) -> None:
-        response = self._client.post(f"/{name}:archiveSession")
+        response = self._client.post(f"/{name}:archive")
         self._raise_for_status(response)
 
     def unarchive_session(self, name: str) -> None:
-        response = self._client.post(f"/{name}:unarchiveSession")
+        response = self._client.post(f"/{name}:unarchive")
         self._raise_for_status(response)
 
     def get_source(self, name: str) -> Source:

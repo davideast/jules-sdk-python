@@ -108,10 +108,10 @@ class JulesClient:
         response = self._request("POST", f"/{name}:approvePlan")
 
     def archive_session(self, name: str) -> None:
-        response = self._request("POST", f"/{name}:archiveSession")
+        response = self._request("POST", f"/{name}:archive")
 
     def unarchive_session(self, name: str) -> None:
-        response = self._request("POST", f"/{name}:unarchiveSession")
+        response = self._request("POST", f"/{name}:unarchive")
 
     def get_source(self, name: str) -> Source:
         response = self._request("GET", f"/{name}")

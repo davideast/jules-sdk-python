@@ -6,7 +6,6 @@ Usage:
 """
 import sys
 from jules import JulesClient
-from jules.models import SessionState
 
 def main() -> None:
     try:
@@ -16,17 +15,21 @@ def main() -> None:
             print(f"Session created: {session.name}")
 
             print("Simulating a conversation. Sending follow-up message...")
-            # Note: This requires the send_message bug to be fixed first
             client.send_message(session.name, "Can you provide a small example?")
 
             print("\nRecent activities:")
             # List activities is a generator, so we convert to a list
             activities = list(client.list_activities(session.name))
             for activity in activities[-3:]: # Get last 3 activities
-                print(f"- Activity: {activity.name} (Type: {getattr(activity, 'activity_type', 'Unknown')})")
+                print(f"- Activity: {activity.name} (Type: {activity.type.value})")
 
             print("\nCleaning up...")
-            client.delete_session(session.name)
+            # If your Jules API version supports delete_session, it's used here.
+            # Otherwise we might use archive_session. We'll check if delete_session exists.
+            if hasattr(client, "delete_session"):
+                client.delete_session(session.name)
+            else:
+                client.archive_session(session.name)
             print("Done.")
     except Exception as e:
         print(f"Error: {e}")

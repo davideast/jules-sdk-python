@@ -4,6 +4,7 @@ This document tracks known missing functionality, API methods without examples, 
 
 ## Missing API Coverage
 The following methods in `JulesClient` do not have dedicated how-to guides or code examples:
+*   `reject_plan()` - The `JulesClient` does not have a method to explicitly reject a plan. If programmatic validation fails, users must delete the session or pause automation instead.
 
 *   `send_message()` - Used in chat sessions, but there's no how-to.
 *   `archive_session()` - No how-to guide for archiving sessions.

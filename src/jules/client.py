@@ -23,6 +23,15 @@ class JulesClient:
                 e.response.status_code
             ) from e
 
+    def _request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
+        try:
+            response = self._client.request(method, url, **kwargs)
+            self._raise_for_status(response)
+            return response
+        except httpx.RequestError as e:
+            raise JulesError(f"Network error: {e}") from e
+
+
     def __init__(self, api_key: Optional[str] = None, base_url: str = "https://jules.googleapis.com/v1alpha"):
         self.api_key = api_key or os.environ.get("JULES_API_KEY")
         if not self.api_key:
@@ -46,8 +55,7 @@ class JulesClient:
             if next_page_token:
                 params["pageToken"] = next_page_token
 
-            response = self._client.get(endpoint, params=params)
-            self._raise_for_status(response)
+            response = self._request("GET", endpoint, params=params)
             data = response.json()
 
             for item_data in data.get(key, []):
@@ -73,49 +81,40 @@ class JulesClient:
                 "githubRepoContext": {"startingBranch": "main"}
             }
 
-        response = self._client.post("/sessions", json=payload)
-        self._raise_for_status(response)
+        response = self._request("POST", "/sessions", json=payload)
         return Session.from_dict(response.json())
 
     def get_session(self, name: str) -> Session:
-        response = self._client.get(f"/{name}")
-        self._raise_for_status(response)
+        response = self._request("GET", f"/{name}")
         return Session.from_dict(response.json())
 
     def list_sessions(self) -> Iterator[Session]:
         yield from self._paginate("/sessions", "sessions", Session)
 
     def delete_session(self, name: str) -> None:
-        response = self._client.delete(f"/{name}")
-        self._raise_for_status(response)
+        response = self._request("DELETE", f"/{name}")
 
     def send_message(self, session_name: str, message: str) -> None:
-        response = self._client.post(f"/{session_name}:sendMessage", json={"prompt": message})
-        self._raise_for_status(response)
+        response = self._request("POST", f"/{session_name}:sendMessage", json={"prompt": message})
 
     def get_activity(self, name: str) -> Activity:
-        response = self._client.get(f"/{name}")
-        self._raise_for_status(response)
+        response = self._request("GET", f"/{name}")
         return Activity.from_dict(response.json())
 
     def list_activities(self, session_name: str) -> Iterator[Activity]:
         yield from self._paginate(f"/{session_name}/activities", "activities", Activity)
 
     def approve_plan(self, name: str) -> None:
-        response = self._client.post(f"/{name}:approvePlan")
-        self._raise_for_status(response)
+        response = self._request("POST", f"/{name}:approvePlan")
 
     def archive_session(self, name: str) -> None:
-        response = self._client.post(f"/{name}:archiveSession")
-        self._raise_for_status(response)
+        response = self._request("POST", f"/{name}:archiveSession")
 
     def unarchive_session(self, name: str) -> None:
-        response = self._client.post(f"/{name}:unarchiveSession")
-        self._raise_for_status(response)
+        response = self._request("POST", f"/{name}:unarchiveSession")
 
     def get_source(self, name: str) -> Source:
-        response = self._client.get(f"/{name}")
-        self._raise_for_status(response)
+        response = self._request("GET", f"/{name}")
         return Source.from_dict(response.json())
 
     def list_sources(self) -> Iterator[Source]:

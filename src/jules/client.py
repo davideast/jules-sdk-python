@@ -2,7 +2,7 @@
 import os
 import httpx
 from typing import Iterator, Optional, Dict, Any
-from .models import Session, Activity, Source
+from .models import Session, Activity, Source, AutomationMode
 
 class JulesError(Exception):
     pass
@@ -65,10 +65,12 @@ class JulesClient:
             if not next_page_token:
                 break
 
-    def create_session(self, prompt: str, require_plan_approval: Optional[bool] = None, source: Optional[str] = None, source_context: Optional[Any] = None) -> Session:
+    def create_session(self, prompt: str, require_plan_approval: Optional[bool] = None, source: Optional[str] = None, source_context: Optional[Any] = None, automation_mode: Optional[AutomationMode] = None) -> Session:
         payload: Dict[str, Any] = {"prompt": prompt}
         if require_plan_approval is not None:
             payload["requirePlanApproval"] = require_plan_approval
+        if automation_mode is not None:
+            payload["automationMode"] = automation_mode.value
 
         if source_context is not None:
             payload["sourceContext"] = source_context.to_dict()

@@ -201,3 +201,9 @@ def test_network_read_timeout(client, mock_api):
     with pytest.raises(JulesError) as exc_info:
         client.get_session("sessions/123")
     assert "Network error: Read timeout" in str(exc_info.value)
+
+def test_create_session_with_automation_mode(client, mock_api):
+    from jules.models import AutomationMode
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    client.create_session("foo", automation_mode=AutomationMode.AUTO_CREATE_PR)
+    assert mock_api.calls[-1].request.read().decode().find('"automationMode":"AUTO_CREATE_PR"') != -1

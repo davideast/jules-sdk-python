@@ -1,0 +1,41 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f pyproject.toml ]; then pip install .[dev]; else echo "pyproject.toml not found, skipping install"; fi
+
+    - name: Lint with MyPy
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        pip install mypy
+        if [ -d "src/jules" ]; then mypy src/jules/; else echo "src/jules not found, skipping lint"; fi
+
+    - name: Test with pytest
+      run: |
+        pip install pytest respx
+        if [ -d "tests" ]; then pytest tests/; else echo "tests not found, skipping tests"; fi

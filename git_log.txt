@@ -1,0 +1,14 @@
+--- git status ---
+On branch fix-issue-6-jules-client
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	deleted:    manual_submit.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_log.txt
+
+\n--- git log ---
+* 0a5210a Implement JulesClient for v1alpha API interaction
+* 576dd54 Merge branch 'main' of github.com:davideast/jules-sdk-python
+* 64d46ed chore: update .github/workflows/fleet-merge.yml

@@ -2,7 +2,7 @@
 import os
 import httpx
 from typing import Iterator, Optional, Dict, Any
-from .models import Session, Activity, Source, AutomationMode
+from .models import Session, Activity, Source, AutomationMode, Plan, ActivityType
 
 class JulesError(Exception):
     pass
@@ -108,6 +108,13 @@ class JulesClient:
 
     def approve_plan(self, name: str) -> None:
         response = self._request("POST", f"/{name}:approvePlan")
+
+    def plan(self, session_name: str) -> Optional[Plan]:
+        for activity in self.list_activities(session_name):
+            if activity.type == ActivityType.PLAN_GENERATED:
+                # Assuming activity.details holds the 'plan' dictionary
+                return Plan.from_dict(activity.details.get("plan", {}))
+        return None
 
     def archive_session(self, name: str) -> None:
         response = self._request("POST", f"/{name}:archive")

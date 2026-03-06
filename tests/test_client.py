@@ -125,6 +125,16 @@ def test_approve_plan(client, mock_api):
     mock_api.post("/sessions/123:approvePlan").mock(return_value=Response(200, json={}))
     client.approve_plan("sessions/123")
 
+def test_plan(client, mock_api):
+    mock_api.get("/sessions/123/activities").mock(return_value=Response(200, json={
+        "activities": [
+            {"name": "activities/1", "createTime": "2024-01-01", "planGenerated": {"plan": {"id": "p1", "createTime": "2024-01-01", "steps": []}}},
+        ]
+    }))
+    plan = client.plan("sessions/123")
+    assert plan is not None
+    assert plan.id == "p1"
+
 def test_archive_session(client, mock_api):
     mock_api.post("/sessions/123:archive").mock(return_value=Response(200, json={}))
     client.archive_session("sessions/123")

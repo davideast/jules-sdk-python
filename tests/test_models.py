@@ -3,7 +3,7 @@ from jules.models import Session, Activity, Source, SessionState, Plan, PlanStep
 def test_session_from_dict():
     data = {
         "name": "sessions/123",
-        "state": "CREATED",
+        "state": "PLANNING",
         "createTime": "2023-01-01T00:00:00Z",
         "updateTime": "2023-01-01T00:00:00Z",
         "prompt": "hello",
@@ -12,22 +12,14 @@ def test_session_from_dict():
         "requirePlanApproval": True,
         "sourceContext": {
             "source": "sources/1",
-            "githubRepoContext": {
-                "githubRepo": {
-                    "owner": "test",
-                    "repo": "repo",
-                    "isPrivate": True,
-                    "defaultBranch": {"displayName": "main"},
-                    "branches": [{"displayName": "main"}]
-                }
-            },
+            "githubRepoContext": {"startingBranch": "main"},
             "workingBranch": "main",
             "environmentVariablesEnabled": True
         }
     }
     session = Session.from_dict(data)
     assert session.name == "sessions/123"
-    assert session.state == SessionState.CREATED
+    assert session.state == SessionState.PLANNING
     assert session.prompt == "hello"
     assert session.id == "123"
     assert session.title == "My Session"
@@ -35,27 +27,27 @@ def test_session_from_dict():
     assert session.source_context is not None
     assert session.source_context.source == "sources/1"
     assert session.source_context.github_repo_context is not None
-    assert session.source_context.github_repo_context.github_repo.owner == "test"
+    assert session.source_context.github_repo_context.starting_branch == "main"
     assert session.source_context.working_branch == "main"
     assert session.source_context.environment_variables_enabled is True
 
 def test_session_to_dict():
     session = Session(
         name="sessions/1",
-        state=SessionState.RUNNING,
+        state=SessionState.IN_PROGRESS,
         create_time="t1",
         update_time="t2",
     )
     d = session.to_dict()
     assert d["name"] == "sessions/1"
-    assert d["state"] == "RUNNING"
+    assert d["state"] == "IN_PROGRESS"
     assert "expireTime" not in d
 
 def test_activity_roundtrip():
     data = {
         "name": "activities/1",
         "createTime": "t",
-        "agentMessaged": {"message": "hello world"},
+        "planApproved": {"message": "hello world"},
         "id": "activity_1",
         "description": "Agent sent a message",
         "originator": "agent",
@@ -63,7 +55,7 @@ def test_activity_roundtrip():
     }
     a = Activity.from_dict(data)
     assert a.details == {"message": "hello world"}
-    assert a.type.value == "agentMessaged"
+    assert a.type.value == "planApproved"
     assert a.id == "activity_1"
     assert a.description == "Agent sent a message"
     assert a.originator == "agent"
@@ -73,8 +65,8 @@ def test_activity_roundtrip():
     roundtrip = a.to_dict()
     assert roundtrip["name"] == "activities/1"
     assert roundtrip["createTime"] == "t"
-    assert "agentMessaged" in roundtrip
-    assert roundtrip["agentMessaged"] == {"message": "hello world"}
+    assert "planApproved" in roundtrip
+    assert roundtrip["planApproved"] == {"message": "hello world"}
     assert roundtrip["id"] == "activity_1"
     assert roundtrip["description"] == "Agent sent a message"
     assert roundtrip["originator"] == "agent"
@@ -183,7 +175,7 @@ def test_session_outputs():
 def test_session_optional_fields_to_dict():
     session = Session(
         name="sessions/1",
-        state=SessionState.RUNNING,
+        state=SessionState.IN_PROGRESS,
         create_time="t1",
         update_time="t2",
         id="123",
@@ -207,13 +199,7 @@ def test_source_context_to_dict():
     sc = SourceContext(
         source="sources/1",
         github_repo_context=GitHubRepoContext(
-            github_repo=GitHubRepo(
-                owner="test",
-                repo="repo",
-                is_private=True,
-                default_branch=GitHubBranch("main"),
-                branches=[]
-            )
+            starting_branch="main"
         ),
         working_branch="main",
         environment_variables_enabled=True
@@ -222,7 +208,7 @@ def test_source_context_to_dict():
     assert d["source"] == "sources/1"
     assert d["workingBranch"] == "main"
     assert d["environmentVariablesEnabled"] is True
-    assert d["githubRepoContext"]["githubRepo"]["owner"] == "test"
+    assert d["githubRepoContext"]["startingBranch"] == "main"
 
 def test_activity_unknown_type():
     data = {
@@ -286,6 +272,11 @@ def test_session_output_change_set():
     d = so.to_dict()
     assert d["changeSet"]["source"] == "source1"
 
-def test_github_repo_context_starting_branch():
-    context = GitHubRepoContext(starting_branch="feature-branch")
-    assert context.to_dict()["startingBranch"] == "feature-branch"
+def test_github_repo_context_serialization():
+    context = GitHubRepoContext(starting_branch="main")
+    assert context.to_dict() == {"startingBranch": "main"}
+
+def test_github_repo_context_deserialization():
+    context = GitHubRepoContext.from_dict({"startingBranch": "main"})
+    assert context.starting_branch == "main"
+    assert not hasattr(context, "github_repo") or context.github_repo is None

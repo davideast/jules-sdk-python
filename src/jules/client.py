@@ -39,7 +39,7 @@ class JulesClient:
         self.base_url = base_url
         self._client = httpx.Client(
             base_url=self.base_url,
-            headers={"x-goog-api-key": self.api_key}
+            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key.startswith("ya29") else {"x-goog-api-key": self.api_key}
         )
 
     def __enter__(self) -> "JulesClient":

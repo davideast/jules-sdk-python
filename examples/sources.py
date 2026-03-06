@@ -2,7 +2,7 @@
 
 Usage:
     export JULES_API_KEY=your-key
-    python examples/inspect_source.py
+    python examples/sources.py
 """
 from jules import JulesClient
 from jules.models import GitHubRepo

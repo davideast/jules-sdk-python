@@ -9,15 +9,14 @@ class AutomationMode(str, Enum):
 
 class SessionState(str, Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    CREATED = "CREATED"
     QUEUED = "QUEUED"
-    RUNNING = "RUNNING"
+    PLANNING = "PLANNING"
+    AWAITING_PLAN_APPROVAL = "AWAITING_PLAN_APPROVAL"
+    AWAITING_USER_FEEDBACK = "AWAITING_USER_FEEDBACK"
     IN_PROGRESS = "IN_PROGRESS"
     PAUSED = "PAUSED"
-    AWAITING_USER_FEEDBACK = "AWAITING_USER_FEEDBACK"
-    COMPLETED = "COMPLETED"
     FAILED = "FAILED"
-    CANCELLED = "CANCELLED"
+    COMPLETED = "COMPLETED"
 
 class ActivityType(str, Enum):
     AGENT_MESSAGED = "agentMessaged"
@@ -30,20 +29,16 @@ class ActivityType(str, Enum):
 
 @dataclass
 class GitHubRepoContext:
-    github_repo: Optional['GitHubRepo'] = None
     starting_branch: Optional[str] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GitHubRepoContext":
         return cls(
-            github_repo=GitHubRepo.from_dict(data["githubRepo"]) if "githubRepo" in data else None,
             starting_branch=data.get("startingBranch"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {}
-        if self.github_repo:
-            result["githubRepo"] = self.github_repo.to_dict()
         if self.starting_branch:
             result["startingBranch"] = self.starting_branch
         return result

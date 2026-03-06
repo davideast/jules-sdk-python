@@ -24,36 +24,36 @@ def test_custom_base_url():
 def test_create_session(client, mock_api):
     mock_api.post("/sessions").mock(return_value=Response(200, json={
         "name": "sessions/123",
-        "state": "CREATED",
+        "state": "PLANNING",
         "createTime": "2023-10-26T12:00:00Z",
         "updateTime": "2023-10-26T12:00:00Z",
         "prompt": "foo"
     }))
     session = client.create_session("foo")
     assert session.name == "sessions/123"
-    assert session.state == SessionState.CREATED
+    assert session.state == SessionState.PLANNING
 
 def test_get_session(client, mock_api):
     mock_api.get("/sessions/123").mock(return_value=Response(200, json={
         "name": "sessions/123",
-        "state": "RUNNING",
+        "state": "IN_PROGRESS",
         "createTime": "2023-10-26T12:00:00Z",
         "updateTime": "2023-10-26T12:05:00Z",
     }))
     session = client.get_session("sessions/123")
-    assert session.state == SessionState.RUNNING
+    assert session.state == SessionState.IN_PROGRESS
 
 def test_list_sessions_pagination(client, mock_api):
     def side_effect(request):
         params = request.url.params
         if "pageToken" not in params:
              return Response(200, json={
-                "sessions": [{"name": "sessions/1", "state": "CREATED", "createTime": "t1", "updateTime": "t1"}],
+                "sessions": [{"name": "sessions/1", "state": "PLANNING", "createTime": "t1", "updateTime": "t1"}],
                 "nextPageToken": "page2"
             })
         elif params["pageToken"] == "page2":
              return Response(200, json={
-                "sessions": [{"name": "sessions/2", "state": "CREATED", "createTime": "t2", "updateTime": "t2"}],
+                "sessions": [{"name": "sessions/2", "state": "PLANNING", "createTime": "t2", "updateTime": "t2"}],
             })
         return Response(404)
 
@@ -125,6 +125,16 @@ def test_approve_plan(client, mock_api):
     mock_api.post("/sessions/123:approvePlan").mock(return_value=Response(200, json={}))
     client.approve_plan("sessions/123")
 
+def test_plan(client, mock_api):
+    mock_api.get("/sessions/123/activities").mock(return_value=Response(200, json={
+        "activities": [
+            {"name": "activities/1", "createTime": "2024-01-01", "planGenerated": {"plan": {"id": "p1", "createTime": "2024-01-01", "steps": []}}},
+        ]
+    }))
+    plan = client.plan("sessions/123")
+    assert plan is not None
+    assert plan.id == "p1"
+
 def test_archive_session(client, mock_api):
     mock_api.post("/sessions/123:archive").mock(return_value=Response(200, json={}))
     client.archive_session("sessions/123")
@@ -163,23 +173,23 @@ def test_list_sources_pagination(client, mock_api):
     assert sources[1].name == "sources/2"
 
 def test_create_session_with_source(client, mock_api):
-    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "PLANNING", "createTime": "t1", "updateTime": "t2"}))
     client.create_session("foo", source="github/davideast/repo")
     assert mock_api.calls[-1].request.read().decode().find("sources/github/davideast/repo") != -1
 
 def test_create_session_with_source_with_prefix(client, mock_api):
-    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "PLANNING", "createTime": "t1", "updateTime": "t2"}))
     client.create_session("foo", source="sources/github/davideast/repo")
     assert mock_api.calls[-1].request.read().decode().find("sources/github/davideast/repo") != -1
 
 def test_create_session_with_require_plan_approval(client, mock_api):
-    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "PLANNING", "createTime": "t1", "updateTime": "t2"}))
     client.create_session("foo", require_plan_approval=True)
     assert mock_api.calls[-1].request.read().decode().find('"requirePlanApproval":true') != -1
 
 def test_create_session_with_source_context(client, mock_api):
     from jules.models import SourceContext
-    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "PLANNING", "createTime": "t1", "updateTime": "t2"}))
     sc = SourceContext(source="sources/1", working_branch="main")
     client.create_session("foo", source_context=sc)
     assert mock_api.calls[-1].request.read().decode().find('"source":"sources/1"') != -1
@@ -204,6 +214,6 @@ def test_network_read_timeout(client, mock_api):
 
 def test_create_session_with_automation_mode(client, mock_api):
     from jules.models import AutomationMode
-    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "CREATED", "createTime": "t1", "updateTime": "t2"}))
+    mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "PLANNING", "createTime": "t1", "updateTime": "t2"}))
     client.create_session("foo", automation_mode=AutomationMode.AUTO_CREATE_PR)
     assert mock_api.calls[-1].request.read().decode().find('"automationMode":"AUTO_CREATE_PR"') != -1

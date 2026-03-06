@@ -3,7 +3,7 @@ from jules.models import Session, Activity, Source, SessionState, Plan, PlanStep
 def test_session_from_dict():
     data = {
         "name": "sessions/123",
-        "state": "CREATED",
+        "state": "PLANNING",
         "createTime": "2023-01-01T00:00:00Z",
         "updateTime": "2023-01-01T00:00:00Z",
         "prompt": "hello",
@@ -27,7 +27,7 @@ def test_session_from_dict():
     }
     session = Session.from_dict(data)
     assert session.name == "sessions/123"
-    assert session.state == SessionState.CREATED
+    assert session.state == SessionState.PLANNING
     assert session.prompt == "hello"
     assert session.id == "123"
     assert session.title == "My Session"
@@ -42,20 +42,20 @@ def test_session_from_dict():
 def test_session_to_dict():
     session = Session(
         name="sessions/1",
-        state=SessionState.RUNNING,
+        state=SessionState.IN_PROGRESS,
         create_time="t1",
         update_time="t2",
     )
     d = session.to_dict()
     assert d["name"] == "sessions/1"
-    assert d["state"] == "RUNNING"
+    assert d["state"] == "IN_PROGRESS"
     assert "expireTime" not in d
 
 def test_activity_roundtrip():
     data = {
         "name": "activities/1",
         "createTime": "t",
-        "agentMessaged": {"message": "hello world"},
+        "planApproved": {"message": "hello world"},
         "id": "activity_1",
         "description": "Agent sent a message",
         "originator": "agent",
@@ -63,7 +63,7 @@ def test_activity_roundtrip():
     }
     a = Activity.from_dict(data)
     assert a.details == {"message": "hello world"}
-    assert a.type.value == "agentMessaged"
+    assert a.type.value == "planApproved"
     assert a.id == "activity_1"
     assert a.description == "Agent sent a message"
     assert a.originator == "agent"
@@ -73,8 +73,8 @@ def test_activity_roundtrip():
     roundtrip = a.to_dict()
     assert roundtrip["name"] == "activities/1"
     assert roundtrip["createTime"] == "t"
-    assert "agentMessaged" in roundtrip
-    assert roundtrip["agentMessaged"] == {"message": "hello world"}
+    assert "planApproved" in roundtrip
+    assert roundtrip["planApproved"] == {"message": "hello world"}
     assert roundtrip["id"] == "activity_1"
     assert roundtrip["description"] == "Agent sent a message"
     assert roundtrip["originator"] == "agent"
@@ -183,7 +183,7 @@ def test_session_outputs():
 def test_session_optional_fields_to_dict():
     session = Session(
         name="sessions/1",
-        state=SessionState.RUNNING,
+        state=SessionState.IN_PROGRESS,
         create_time="t1",
         update_time="t2",
         id="123",

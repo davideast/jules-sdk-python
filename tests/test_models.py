@@ -12,15 +12,7 @@ def test_session_from_dict():
         "requirePlanApproval": True,
         "sourceContext": {
             "source": "sources/1",
-            "githubRepoContext": {
-                "githubRepo": {
-                    "owner": "test",
-                    "repo": "repo",
-                    "isPrivate": True,
-                    "defaultBranch": {"displayName": "main"},
-                    "branches": [{"displayName": "main"}]
-                }
-            },
+            "githubRepoContext": {"startingBranch": "main"},
             "workingBranch": "main",
             "environmentVariablesEnabled": True
         }
@@ -35,7 +27,7 @@ def test_session_from_dict():
     assert session.source_context is not None
     assert session.source_context.source == "sources/1"
     assert session.source_context.github_repo_context is not None
-    assert session.source_context.github_repo_context.github_repo.owner == "test"
+    assert session.source_context.github_repo_context.starting_branch == "main"
     assert session.source_context.working_branch == "main"
     assert session.source_context.environment_variables_enabled is True
 
@@ -207,13 +199,7 @@ def test_source_context_to_dict():
     sc = SourceContext(
         source="sources/1",
         github_repo_context=GitHubRepoContext(
-            github_repo=GitHubRepo(
-                owner="test",
-                repo="repo",
-                is_private=True,
-                default_branch=GitHubBranch("main"),
-                branches=[]
-            )
+            starting_branch="main"
         ),
         working_branch="main",
         environment_variables_enabled=True
@@ -222,7 +208,7 @@ def test_source_context_to_dict():
     assert d["source"] == "sources/1"
     assert d["workingBranch"] == "main"
     assert d["environmentVariablesEnabled"] is True
-    assert d["githubRepoContext"]["githubRepo"]["owner"] == "test"
+    assert d["githubRepoContext"]["startingBranch"] == "main"
 
 def test_activity_unknown_type():
     data = {
@@ -286,6 +272,11 @@ def test_session_output_change_set():
     d = so.to_dict()
     assert d["changeSet"]["source"] == "source1"
 
-def test_github_repo_context_starting_branch():
-    context = GitHubRepoContext(starting_branch="feature-branch")
-    assert context.to_dict()["startingBranch"] == "feature-branch"
+def test_github_repo_context_serialization():
+    context = GitHubRepoContext(starting_branch="main")
+    assert context.to_dict() == {"startingBranch": "main"}
+
+def test_github_repo_context_deserialization():
+    context = GitHubRepoContext.from_dict({"startingBranch": "main"})
+    assert context.starting_branch == "main"
+    assert not hasattr(context, "github_repo") or context.github_repo is None

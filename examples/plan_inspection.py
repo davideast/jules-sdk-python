@@ -23,19 +23,17 @@ def main() -> None:
         session = awaiting_sessions[0]
         print(f"Inspecting plan for session: {session.name}")
 
-        # Find the activity that contains the generated plan
-        activities = list(client.list_activities(session.name))
-        plan_activity = next((a for a in activities if getattr(a.type, "value", str(a.type)) == "planGenerated"), None)
+        # Use the built-in helper method to get the plan
+        plan = client.plan(session.name)
 
-        if not plan_activity or "plan" not in plan_activity.details:
-            print("No plan details found in activities.")
+        if not plan or not plan.steps:
+            print("No plan or plan steps found.")
             return
 
-        plan_data = plan_activity.details["plan"]
         print("\nProposed Plan Steps:")
-        for step in plan_data.get("steps", []):
-            print(f"{step['index']}. {step['title']}")
-            print(f"   -> {step['description']}")
+        for step in plan.steps:
+            print(f"{step.index}. {step.title}")
+            print(f"   -> {step.description}")
 
         print("\nNote: Call `client.approve_plan(session.name)` when satisfied.")
 

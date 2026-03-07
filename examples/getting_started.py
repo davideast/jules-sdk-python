@@ -33,7 +33,7 @@ def main() -> None:
             current_session = client.get_session(session.name)
             print(f"Current state: {current_session.state.value}")
 
-            if current_session.state in (SessionState.COMPLETED, SessionState.FAILED, SessionState.CANCELLED):
+            if current_session.state in (SessionState.COMPLETED, SessionState.FAILED):
                 print(f"Session finished with state: {current_session.state.value}")
                 break
 

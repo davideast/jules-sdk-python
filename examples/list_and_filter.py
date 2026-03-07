@@ -17,7 +17,7 @@ def main() -> None:
         print("\nFetching past sessions...")
         active_sessions = []
         for session in client.list_sessions():
-            if session.state in (SessionState.CREATED, SessionState.RUNNING):
+            if session.state in (SessionState.QUEUED, SessionState.IN_PROGRESS):
                 active_sessions.append(session.name)
 
         print(f"Found {len(active_sessions)} active sessions.")

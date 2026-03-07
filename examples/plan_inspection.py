@@ -5,7 +5,7 @@ Usage:
     python examples/plan_inspection.py
 """
 from jules import JulesClient
-from jules.models import SessionState, ActivityType
+from jules.models import SessionState
 
 def main() -> None:
     with JulesClient() as client:
@@ -23,19 +23,16 @@ def main() -> None:
         session = awaiting_sessions[0]
         print(f"Inspecting plan for session: {session.name}")
 
-        # Find the activity that contains the generated plan
-        activities = list(client.list_activities(session.name))
-        plan_activity = next((a for a in activities if getattr(a.type, "value", str(a.type)) == "planGenerated"), None)
-
-        if not plan_activity or "plan" not in plan_activity.details:
-            print("No plan details found in activities.")
+        # Fetch the plan directly using the client.plan() method
+        plan = client.plan(session.name)
+        if not plan:
+            print("No plan found for this session.")
             return
 
-        plan_data = plan_activity.details["plan"]
         print("\nProposed Plan Steps:")
-        for step in plan_data.get("steps", []):
-            print(f"{step['index']}. {step['title']}")
-            print(f"   -> {step['description']}")
+        for step in plan.steps:
+            print(f"{step.index}. {step.title}")
+            print(f"   -> {step.description}")
 
         print("\nNote: Call `client.approve_plan(session.name)` when satisfied.")
 

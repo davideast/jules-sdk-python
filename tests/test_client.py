@@ -217,3 +217,12 @@ def test_create_session_with_automation_mode(client, mock_api):
     mock_api.post("/sessions").mock(return_value=Response(200, json={"name": "sessions/123", "state": "PLANNING", "createTime": "t1", "updateTime": "t2"}))
     client.create_session("foo", automation_mode=AutomationMode.AUTO_CREATE_PR)
     assert mock_api.calls[-1].request.read().decode().find('"automationMode":"AUTO_CREATE_PR"') != -1
+
+def test_plan_none(client, mock_api):
+    mock_api.get("/sessions/123/activities").mock(return_value=Response(200, json={
+        "activities": [
+            {"name": "activities/1", "createTime": "2024-01-01", "agentMessaged": {"message": {"text": "hello"}}},
+        ]
+    }))
+    plan = client.plan("sessions/123")
+    assert plan is None

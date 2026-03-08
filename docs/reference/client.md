@@ -83,6 +83,15 @@ Lists all activities within a session using pagination.
     *   `JulesAPIError`: Raised with status code 404 if the session is not found, or 401 for bad authentication.
     *   `JulesError`: Raised for underlying network failures via `httpx.RequestError`.
 
+#### `plan(session_name: str) -> Optional[Plan]`
+
+Retrieves the generated execution plan for a given session by parsing its activities.
+*   **`session_name`** (`str`): The unique name/identifier of the session.
+*   **Returns** (`Optional[Plan]`): A `Plan` object if a `PLAN_GENERATED` activity is found, otherwise `None`.
+*   **Raises**:
+    *   `JulesAPIError`: Raised with status code 404 if the session is not found, or 401 for bad authentication.
+    *   `JulesError`: Raised for underlying network failures via `httpx.RequestError`.
+
 #### `approve_plan(name: str) -> None`
 
 Approves a plan, resuming session execution.

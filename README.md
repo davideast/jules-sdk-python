@@ -29,6 +29,7 @@ with JulesClient() as client:
 - [Handle errors](docs/how-to/handle-errors.md)
 - [Attach sources](docs/how-to/attach-sources.md)
 - [Framework integrations cookbook](docs/how-to/cookbook.md)
+- [Retrieve session outputs](docs/how-to/retrieve-session-outputs.md)
 
 **Looking things up**
 - [JulesClient](docs/reference/client.md)
